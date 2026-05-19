@@ -37,6 +37,28 @@ Use these endpoints to generate or expand keyword candidates:
 /apis/v1/dataforseo/keywords_data/bing/keywords_for_site/live
 ```
 
+## Site Crawling and Page Understanding
+
+When a website is provided, crawl the site first with `scripts/site_crawler.py`.
+If the local crawl is blocked, incomplete, or too shallow, use AIsa/DataForSEO
+OnPage endpoints as fallback evidence:
+
+```text
+/apis/v1/dataforseo/on_page/content_parsing/live
+/apis/v1/dataforseo/on_page/task_post
+/apis/v1/dataforseo/on_page/tasks_ready
+/apis/v1/dataforseo/on_page/pages
+/apis/v1/dataforseo/on_page/raw_html
+/apis/v1/dataforseo/on_page/summary/{id}
+/apis/v1/dataforseo/on_page/links
+/apis/v1/dataforseo/on_page/microdata
+```
+
+Use crawl or OnPage evidence to infer product category, features, use cases,
+audience, existing content themes, and seed topics. Do not start keyword
+research with brand or domain keywords unless the user explicitly requests
+brand SEO.
+
 ## Metrics and Demand
 
 Use these endpoints to validate demand:
@@ -108,3 +130,6 @@ Recommended uses:
 
 Guardrail: never ask the LLM to invent SEO metrics. Send it the metrics you collected and require it to mark uncertain recommendations.
 
+High-opportunity keywords must satisfy difficulty lower than 40 and search
+volume greater than 1000. Use the LLM to explain why those terms fit the
+crawled site and what page type the SERP suggests.

@@ -7,6 +7,7 @@ Use this structure when the user asks for a complete keyword research deliverabl
 - Market:
 - Target domain or URL:
 - Target country and language:
+- Pages crawled:
 - Data sources used:
 - Main recommendation:
 
@@ -14,11 +15,47 @@ Use this structure when the user asks for a complete keyword research deliverabl
 
 List assumptions about geography, language, audience, product scope, competitors, and excluded terms.
 
+## Crawled-Site Business Profile
+
+- Product category:
+- Core features:
+- Target audience:
+- Main use cases:
+- Conversion goal:
+- Existing content themes:
+- Observed content gaps:
+
 ## Top Keyword Clusters
 
-| Cluster | Intent | Best page type | Priority | Why it matters |
-|---|---|---|---|---|
-|  |  |  |  |  |
+Each cluster must include five representative keywords when at least five validated keywords exist.
+
+### Cluster: [Name]
+
+- Intent:
+- Best page type:
+- Priority:
+- Why this cluster fits the crawled site:
+
+| Representative keyword | Volume | Difficulty | CPC | Intent | Why this keyword belongs |
+|---|---:|---:|---:|---|---|
+|  |  |  |  |  |  |
+|  |  |  |  |  |  |
+|  |  |  |  |  |  |
+|  |  |  |  |  |  |
+|  |  |  |  |  |  |
+
+## High-Opportunity Keywords
+
+Only include keywords that satisfy both conditions:
+
+- Difficulty lower than 40
+- Search volume greater than 1000
+
+| Keyword | Cluster | Volume | Difficulty | Intent | Why it is an opportunity | Recommended page type |
+|---|---|---:|---:|---|---|---|
+|  |  |  |  |  |  |  |
+
+If no keyword meets both thresholds, state that clearly and add a separate "Near Opportunities" section.
 
 ## Priority Keyword Shortlist
 
@@ -26,9 +63,15 @@ List assumptions about geography, language, audience, product scope, competitors
 |---|---|---|---:|---:|---:|---|---|
 |  |  |  |  |  |  |  |  |
 
-## SERP Insights
+## SERP-Based Page Recommendations
 
-For the highest-priority keywords, summarize:
+For high-opportunity keywords and each cluster's strongest representative keyword, summarize:
+
+| Keyword | SERP pattern | Recommended page type | Suggested angle | Evidence |
+|---|---|---|---|---|
+|  |  | Landing page / Feature page / Comparison page / Pricing page / Documentation page / Programmatic page / Blog article |  |  |
+
+Include:
 
 - Dominant ranking page types
 - Common SERP features
@@ -54,4 +97,3 @@ For the highest-priority keywords, summarize:
 ## Validation Notes
 
 Call out missing metrics, low-confidence clusters, unsupported locations, unverified LLM-generated ideas, or API limitations.
-

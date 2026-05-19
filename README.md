@@ -8,7 +8,7 @@ This repository collects reusable skills for AI coding agents, SEO operators, an
 
 | Skill | Purpose |
 |---|---|
-| `seo-keyword-research` | Build an SEO keyword strategy from a domain, URL, seed topic, product, or competitor set using AIsa DataForSEO endpoints and AIsa LLM analysis. |
+| `seo-keyword-research` | Crawl a site first, infer its product and business direction, then build an SEO keyword strategy using AIsa DataForSEO endpoints and AIsa LLM analysis. |
 
 ## Requirements
 
@@ -22,4 +22,3 @@ Use the AIsa API for both live data and LLM reasoning:
 
 - Data APIs: `https://api.aisa.one/apis/v1/...`
 - LLM gateway: `https://api.aisa.one/v1/chat/completions`
-

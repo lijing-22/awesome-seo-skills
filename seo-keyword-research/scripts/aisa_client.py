@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import ssl
 import sys
 import urllib.error
 import urllib.request
@@ -14,6 +15,15 @@ from pathlib import Path
 
 API_BASE = "https://api.aisa.one"
 CHAT_ENDPOINT = "https://api.aisa.one/v1/chat/completions"
+
+
+def ssl_context() -> ssl.SSLContext:
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return ssl.create_default_context()
 
 
 def load_text(path: str | None) -> str:
@@ -61,7 +71,7 @@ def post_json(url: str, payload: object) -> object:
         },
     )
     try:
-        with urllib.request.urlopen(request, timeout=120) as response:
+        with urllib.request.urlopen(request, timeout=120, context=ssl_context()) as response:
             text = response.read().decode("utf-8")
             return json.loads(text) if text else {}
     except urllib.error.HTTPError as exc:
@@ -127,4 +137,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

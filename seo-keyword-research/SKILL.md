@@ -1,6 +1,6 @@
 ---
 name: seo-keyword-research
-description: Use this skill when a user asks for SEO keyword research, keyword discovery, search volume analysis, keyword difficulty, search intent mapping, topic clusters, content opportunities, competitor keyword gaps, or a keyword strategy for a domain, URL, product, market, or seed topic. This skill uses AIsa API access to DataForSEO keyword, SERP, trend, and Labs endpoints plus AIsa LLM reasoning.
+description: Use this skill when a user asks for SEO keyword research, keyword discovery, search volume analysis, keyword difficulty, search intent mapping, topic clusters, content opportunities, competitor keyword gaps, or a keyword strategy for a domain, URL, product, market, or seed topic. When a website is provided, crawl and interpret the site first, then use AIsa API access to DataForSEO keyword, SERP, trend, Labs, and OnPage endpoints plus AIsa LLM reasoning to find non-brand keyword opportunities.
 license: MIT
 compatibility: "Works with any agentskills.io-compatible harness, including Claude Code, Claude, OpenCode, Cursor, Codex, Gemini CLI, OpenClaw, Hermes, Goose, and others. Requires Python 3, curl, and AISA_API_KEY."
 metadata:
@@ -28,7 +28,7 @@ metadata:
 
 # SEO Keyword Research
 
-This skill builds a practical SEO keyword strategy from a domain, URL, seed topic, product, market, or competitor set. It combines structured DataForSEO data through AIsa with AIsa LLM reasoning for clustering, search-intent interpretation, opportunity scoring, and content planning.
+This skill builds a practical SEO keyword strategy from a domain, URL, seed topic, product, market, or competitor set. When the user provides a website, start by crawling and interpreting that website. Use the crawl to understand the product, audience, features, use cases, and business direction before querying keyword data. Then combine structured DataForSEO data through AIsa with AIsa LLM reasoning for clustering, search-intent interpretation, opportunity scoring, SERP-based page recommendations, and content planning.
 
 ## Requirements
 
@@ -56,13 +56,18 @@ Requires Python 3, curl, and `AISA_API_KEY`. Get an API key at `https://aisa.one
 ```bash
 export AISA_API_KEY="your-aisa-api-key"
 
+python3 seo-keyword-research/scripts/site_crawler.py \
+  https://example.com \
+  --max-pages 12 \
+  --out site-profile.json
+
 python3 seo-keyword-research/scripts/aisa_client.py data \
   /apis/v1/dataforseo/dataforseo_labs/google/keyword_suggestions/live \
   payload.json \
   --out keyword-suggestions.json
 ```
 
-Then use the AIsa LLM gateway to cluster, score, and summarize the collected keyword data.
+Use the crawl output to generate seed topics first. Then use AIsa DataForSEO endpoints to validate search demand, difficulty, intent, and SERP reality. Finally use the AIsa LLM gateway to cluster, score, and summarize the verified keyword data.
 
 ## When to Use
 
@@ -93,18 +98,76 @@ Collect or infer:
 
 If country and language are missing, default to the user's market when obvious. Otherwise use United States and English, and note the assumption.
 
-### 2. Build the initial keyword universe
+### 2. Crawl the website before keyword research
+
+When the user provides a domain or URL, crawl the site before querying keyword tools.
+
+```bash
+python3 seo-keyword-research/scripts/site_crawler.py \
+  https://example.com \
+  --max-pages 12 \
+  --out site-profile.json
+```
+
+Prioritize:
+
+- Homepage
+- Product, feature, pricing, docs, integrations, use case, comparison, blog, and about pages
+- Sitemap URLs when available
+- Navigation labels and internal links
+- Page titles, meta descriptions, headings, schema hints, and visible copy
+
+Use the crawl to produce a short business profile:
+
+- Product category
+- Main features and capabilities
+- Target audience and buyer roles
+- Use cases and jobs to be done
+- Integrations, platforms, APIs, or supported tools
+- Pricing model or conversion goal, if visible
+- Competitors, alternatives, and category language mentioned on the site
+- Existing content themes and gaps
+
+Do not start with brand or domain keywords unless the user explicitly asks for brand SEO. Keep brand keywords in a separate "brand validation" section only after the product and category opportunities are mapped.
+
+If the local crawl is blocked, shallow, or heavily JavaScript-rendered, use AIsa/DataForSEO OnPage helpers as fallback evidence:
+
+- `/apis/v1/dataforseo/on_page/content_parsing/live`
+- `/apis/v1/dataforseo/on_page/task_post`
+- `/apis/v1/dataforseo/on_page/pages`
+- `/apis/v1/dataforseo/on_page/raw_html`
+- `/apis/v1/dataforseo/on_page/summary/{id}`
+
+### 3. Convert the site profile into seed topics
+
+Use AIsa LLM reasoning to turn the crawl into seed topics. These are hypotheses, not final keywords.
+
+Generate seed topics from:
+
+- Product category terms
+- Feature and capability terms
+- Use case terms
+- Integration and platform terms
+- Pain points and problem terms
+- Competitor and alternative terms
+- Buyer role terms
+- Transactional modifiers: pricing, alternative, best, tool, API, software, platform, comparison
+- Informational modifiers: what is, how to, guide, examples, tutorial, checklist
+
+Require the LLM to explain why each seed topic matches the crawled site. Remove seeds that cannot be justified from the crawl.
+
+### 4. Build the initial keyword universe
 
 Use AIsa DataForSEO endpoints in this order when inputs are available:
 
-1. Site-derived keywords:
-   - `/apis/v1/dataforseo/dataforseo_labs/google/keywords_for_site/live`
-   - `/apis/v1/dataforseo/keywords_data/google_ads/keywords_for_site/live`
-2. Seed expansion:
+1. Crawl-derived seed expansion:
    - `/apis/v1/dataforseo/dataforseo_labs/google/keyword_suggestions/live`
    - `/apis/v1/dataforseo/dataforseo_labs/google/keyword_ideas/live`
    - `/apis/v1/dataforseo/dataforseo_labs/google/related_keywords/live`
    - `/apis/v1/dataforseo/keywords_data/google_ads/keywords_for_keywords/live`
+2. Site-derived validation, after seed expansion:
+   - `/apis/v1/dataforseo/dataforseo_labs/google/keywords_for_site/live`
+   - `/apis/v1/dataforseo/keywords_data/google_ads/keywords_for_site/live`
 3. Demand and trend checks:
    - `/apis/v1/dataforseo/keywords_data/google_ads/search_volume/live`
    - `/apis/v1/dataforseo/keywords_data/clickstream_data/global_search_volume/live`
@@ -116,7 +179,7 @@ Use AIsa DataForSEO endpoints in this order when inputs are available:
 
 Keep source labels for each keyword: `site`, `seed`, `suggestion`, `related`, `competitor`, `trend`, `serp`, or `llm-generated`. Treat `llm-generated` keywords as hypotheses until validated by search volume or SERP data.
 
-### 3. Expand through competitors and SERPs
+### 5. Expand through competitors and SERPs
 
 When competitors are provided, or when DataForSEO returns SERP competitors:
 
@@ -134,7 +197,7 @@ For the strongest candidate keywords, inspect live search results:
 
 Use SERP data to identify ranking page types, dominant content formats, user intent, SERP features, freshness patterns, weak results, and content gaps.
 
-### 4. Normalize and clean the data
+### 6. Normalize and clean the data
 
 Before scoring:
 
@@ -144,7 +207,7 @@ Before scoring:
 - Mark keywords with missing volume, difficulty, or intent as incomplete rather than guessing numbers.
 - Keep localized variants separate when intent differs by geography.
 
-### 5. Cluster by intent and topic
+### 7. Cluster by intent and topic
 
 Use AIsa LLM reasoning to cluster validated keywords. Prefer compact structured output.
 
@@ -158,7 +221,25 @@ Suggested cluster dimensions:
 
 Do not let the LLM invent metrics. It may classify, summarize, and prioritize, but metrics must come from AIsa/DataForSEO data or be marked as qualitative.
 
-### 6. Score opportunities
+Each final keyword cluster must include five representative keywords with metrics when at least five validated keywords exist. If a cluster has fewer than five validated keywords, show every validated keyword and mark the cluster as needing more expansion.
+
+### 8. Identify high-opportunity keywords
+
+High-opportunity keywords must meet both thresholds:
+
+- Keyword difficulty is lower than 40
+- Search volume is greater than 1000
+
+Do not loosen this threshold silently. If no keywords meet both thresholds, say so and provide a separate "near opportunities" section using the closest candidates.
+
+For every high-opportunity keyword, explain:
+
+- Why it fits the crawled site
+- Which feature, use case, product category, or audience insight from the crawl supports it
+- Why the metric profile is attractive
+- What risk remains after reviewing the SERP
+
+### 9. Score opportunities
 
 Score each keyword or cluster from 0 to 25:
 
@@ -175,17 +256,35 @@ Use a simple label:
 - `Low priority`: weak fit, weak demand, or poor feasibility
 - `Validate first`: interesting idea with incomplete data
 
-### 7. Produce the final deliverable
+### 10. Generate SERP-based page recommendations
+
+Inspect SERPs for high-opportunity keywords and the strongest representative keyword in each cluster. Recommend a page type based on observed ranking results:
+
+- Landing page: SERP is dominated by product, software, API, platform, or tool pages.
+- Feature page: SERP shows feature-specific vendor pages, docs, or tool capability pages.
+- Comparison page: query includes `vs`, `alternative`, `competitor`, `best`, or SERP contains comparison lists and review pages.
+- Blog article or guide: SERP is dominated by explainers, tutorials, how-to articles, or People Also Ask.
+- Pricing page: query includes pricing, cost, cheap, free, plan, or SERP contains pricing pages.
+- Documentation page: SERP contains API references, SDK docs, GitHub repos, or developer guides.
+- Programmatic page: the pattern can be repeated across locations, integrations, categories, competitors, templates, or use cases.
+
+For each recommendation, explain the SERP evidence and the suggested page angle.
+
+### 11. Produce the final deliverable
 
 Return a concise keyword research report with:
 
 - Executive summary
 - Research assumptions
+- Crawled-site business profile
 - Top keyword clusters
+- Five representative keywords per cluster
+- High-opportunity keywords where difficulty is lower than 40 and volume is greater than 1000
+- Why those keywords are opportunities
 - Priority keyword shortlist
 - Best content opportunities
-- Competitor or SERP insights
-- Recommended next pages or updates
+- SERP-based page recommendations
+- Recommended next pages, updates, or programmatic templates
 - Data gaps and validation notes
 
 Use `references/report-template.md` when a full report is requested.
@@ -194,6 +293,8 @@ Use `references/report-template.md` when a full report is requested.
 
 Use the AIsa LLM gateway for:
 
+- Summarizing the crawled site into a product and business profile
+- Generating justified seed topics from the crawl
 - Classifying search intent
 - Grouping keywords into clusters
 - Summarizing SERP patterns
@@ -227,6 +328,13 @@ curl -sS "https://api.aisa.one/v1/chat/completions" \
 Use `scripts/aisa_client.py` for quick API calls:
 
 ```bash
+python3 seo-keyword-research/scripts/site_crawler.py \
+  https://example.com \
+  --max-pages 12 \
+  --out site-profile.json
+```
+
+```bash
 python3 seo-keyword-research/scripts/aisa_client.py data \
   /apis/v1/dataforseo/dataforseo_labs/google/keyword_suggestions/live \
   payload.json \
@@ -243,11 +351,16 @@ python3 seo-keyword-research/scripts/aisa_client.py chat \
 
 ## Quality Rules
 
-- Prefer live AIsa/DataForSEO data over browser scraping.
+- When a website is provided, crawl the website before keyword research.
+- Do not begin with brand keywords unless the user explicitly asks for brand SEO.
+- Prefer the local crawler and live AIsa/DataForSEO data over manual browser scraping.
 - Cite which endpoint groups were used.
 - Separate facts from recommendations.
 - Do not invent search volume, CPC, keyword difficulty, rank, or trend values.
 - Use LLM output for interpretation, not as a substitute for keyword data.
+- Every keyword cluster should show five representative keywords with available metrics.
+- High-opportunity keywords must satisfy difficulty < 40 and search volume > 1000.
+- SERP-based page recommendations must say whether the user should create a landing page, feature page, comparison page, pricing page, documentation page, programmatic page, or blog article, and why.
 - Keep raw exports private if they contain customer domains, competitors, or internal strategy.
 - Make the final answer actionable: the user should know which keywords to target, which page type to create, and why.
 
